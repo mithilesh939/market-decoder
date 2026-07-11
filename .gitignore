@@ -1,0 +1,13 @@
+generate
+benchmark
+test_decoder
+test_ring_buffer
+bench_concurrency
+bench_adaptive
+market_data.bin
+python/*.so
+python/__pycache__/
+tools/__pycache__/
+tools/real_market_data.bin
+tools/real_data_summary.json
+*.o
