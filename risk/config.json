@@ -1,0 +1,12 @@
+{
+  "BTCUSDT": {
+    "price_collar_percent": 2.0,
+    "max_order_size": 5.0,
+    "max_inventory": 10.0
+  },
+  "ETHUSDT": {
+    "price_collar_percent": 3.0,
+    "max_order_size": 50.0,
+    "max_inventory": 100.0
+  }
+}

@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main, feature/**]
+  pull_request:
+    branches: [main]
+
+jobs:
+  cpp-build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build tools
+        run: sudo apt-get update && sudo apt-get install -y build-essential
+      - name: Build everything
+        run: make all
+      - name: Run C++ test suites
+        run: make test
+
+  python-risk-engine-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run risk engine tests
+        run: |
+          python3 risk/test_price_collar.py
+          python3 risk/test_additional_rules.py
