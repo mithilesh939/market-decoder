@@ -11,3 +11,13 @@ tools/__pycache__/
 tools/real_market_data.bin
 tools/real_data_summary.json
 *.o
+
+# Local Environment and Massive Datasets
+.venv/
+datasets/
+data/
+*.csv
+*.zip
+*.bin
+__pycache__/
+*.pyc
