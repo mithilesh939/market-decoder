@@ -132,6 +132,15 @@ def plot_backtest_trajectory(backtest_df: pd.DataFrame) -> go.Figure:
         name="Realized PnL ($)",
         line=dict(color=THEME["accent"], width=2)
     ), secondary_y=True)
+
+    if "realized_pnl" in backtest_df.columns:
+        fig.add_trace(go.Scatter(
+            x=backtest_df.index,
+            y=backtest_df["realized_pnl"],
+            mode="lines",
+            name="Net PnL (After 5 bps Cost)",
+            line=dict(color=THEME.get("red", "#FF5C5C"), width=1.5, dash="dot")
+        ), secondary_y=True)
     
     fig = _apply_terminal_style(fig, "MARKET MAKER INVENTORY & PnL TRAJECTORY", height=300)
     fig.update_yaxes(title_text="Inventory (BTC)", secondary_y=False, gridcolor=THEME["grid"])
