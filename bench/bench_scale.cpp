@@ -1,17 +1,4 @@
-// bench_scale.cpp
-//
-// Answers "how much data can this decoder actually handle," measured.
-// Runs ONLY MmapDecoder (not NaiveDecoder) -- NaiveDecoder allocates the
-// ENTIRE file into a std::vector<uint8_t> before decoding a single
-// message, which fails or thrashes badly at multi-GB scale on a laptop.
-// That's not hidden here -- it's the finding.
-//
-// Self-monitors: a background thread samples this process's own RSS
-// (/proc/self/status) and CPU time (/proc/self/stat) every 50ms while
-// decode_all() runs, writing the full time series to a CSV.
-//
-// Usage: ./bench_scale <market_data_file> <output_csv_path>
-//
+
 #include "../include/decoder.hpp"
 
 #include <atomic>

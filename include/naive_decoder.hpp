@@ -1,16 +1,4 @@
 #pragma once
-// ---------------------------------------------------------------------------
-// naive_decoder.hpp
-//
-// A deliberately "naive" baseline decoder: reads the whole file into a
-// heap buffer via fread, then for every message heap-allocates a struct
-// and field-by-field copies each value out with memcpy calls.
-//
-// This exists ONLY so bench/benchmark.cpp can show a real, honest
-// before/after number against decoder.hpp's no-copy approach. This is the
-// kind of decoder most people write on a first pass -- it's correct, just
-// not fast.
-// ---------------------------------------------------------------------------
 
 #include "protocol.hpp"
 

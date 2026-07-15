@@ -1,4 +1,4 @@
-"""Professional Dash dashboard for the MarketFlow observability workspace."""
+
 
 from pathlib import Path
 import io

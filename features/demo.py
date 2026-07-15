@@ -1,9 +1,4 @@
-"""
-demo.py -- runs the feature engine against REAL decoded trade data.
-Uses a SAFE slice, not the full 81M-row month (see the OOM story).
 
-Usage: python3 features/demo.py <path_to_trades.bin>
-"""
 import os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "python"))

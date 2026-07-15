@@ -1,21 +1,4 @@
-"""
-microstructure.py
 
-Real microstructure features from real trade/quote data.
-
-DESIGN CONSTRAINT: every function uses vectorized pandas/numpy, NEVER a
-Python for-loop over trades -- that row-by-row pattern is exactly what
-OOM-killed the backtest earlier in this project.
-
-METHODOLOGY NOTE ON TRADE DIRECTION: real OFI needs to know if a trade
-was buyer- or seller-initiated. Binance's raw data has this
-(is_buyer_maker), but our binary format doesn't store it, and
-re-converting 6 months of data to add it is expensive. Trade direction
-here is inferred via the TICK RULE (price up = buy-initiated, price down
-= sell-initiated) -- a real, established technique (simplified Lee-Ready)
-used specifically when explicit side data isn't available. Stated proxy,
-not a claim of real side data.
-"""
 from __future__ import annotations
 
 import numpy as np

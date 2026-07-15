@@ -1,8 +1,4 @@
-"""
-data_pipeline.py -- every function calls a REAL, already-verified piece
-of this project and returns the ACTUAL output. Nothing here invents a
-number.
-"""
+
 from __future__ import annotations
 import csv, os, re, subprocess, sys
 from dataclasses import dataclass

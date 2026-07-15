@@ -1,7 +1,4 @@
-"""
-MarketFlow Telemetry & Observability State Bridge
-Simulates real-time system metrics from the C++ Zero-Copy Engine and Python Risk/MM engines.
-"""
+
 
 import time
 import numpy as np

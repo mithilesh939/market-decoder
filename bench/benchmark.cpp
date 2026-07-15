@@ -1,10 +1,4 @@
-// benchmark.cpp
-//
-// Measures decode throughput of MmapDecoder (no-copy) vs NaiveDecoder
-// (heap-allocate + memcpy per message) over the same input file.
-//
-// Usage: ./benchmark <market_data_file>
-//
+
 #include "../include/decoder.hpp"
 #include "../include/naive_decoder.hpp"
 
@@ -15,9 +9,7 @@
 using namespace md;
 using Clock = std::chrono::steady_clock;
 
-// A visitor that does the minimum realistic amount of work: accumulate
-// a checksum. This prevents the compiler from optimizing the whole decode
-// away as dead code, without adding artificial overhead of its own.
+
 struct ChecksumVisitor : MessageVisitor {
     uint64_t checksum = 0;
     void on_quote(const QuoteMsg& m) override {

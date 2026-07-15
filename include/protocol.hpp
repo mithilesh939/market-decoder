@@ -1,22 +1,4 @@
 #pragma once
-// ---------------------------------------------------------------------------
-// protocol.hpp
-//
-// Binary wire protocol for synthetic exchange market data.
-//
-// Design goal (mirrors Optiver's real approach): every message is a
-// fixed-size, tightly packed struct with a known byte layout. That means
-// "decoding" a message from a raw buffer is nothing more than a
-// reinterpret_cast<const MsgType*>(ptr) -- no field-by-field parsing,
-// no heap allocation, no copying.
-//
-// Wire format per record:
-//   [1 byte  MsgType]  [N bytes payload, N depends on MsgType]
-//
-// All multi-byte fields are fixed-width integers in native (little-endian
-// on x86/ARM) byte order. #pragma pack(push, 1) removes compiler struct
-// padding so sizeof(Struct) == the exact wire size.
-// ---------------------------------------------------------------------------
 
 #include <cstdint>
 #include <cstddef>

@@ -1,5 +1,4 @@
-"""Walks app.layout, checks every callback Output/Input ID actually
-exists. Run BEFORE starting the server. Exit 0 = safe to run."""
+
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from dashboard.app import app

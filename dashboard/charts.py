@@ -1,8 +1,4 @@
-"""
-chart.py -- High-contrast terminal visualizations for real market telemetry.
-Zero synthetic generation, zero random jitter. Ingests strictly verified outputs
-from C++ benchmarks, memory scale logs, and Python risk/backtest engines.
-"""
+
 
 from typing import Dict, Any
 import pandas as pd

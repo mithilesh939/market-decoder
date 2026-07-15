@@ -1,21 +1,4 @@
-"""
-backtest.py
 
-Replays REAL historical trades (tools/real_market_data.bin) through the
-MarketMaker pricing model + the full RiskEngine pipeline, tracking
-inventory/PnL over time.
-
-METHODOLOGY, stated explicitly:
-- Fair value = last real trade price (standard simplification -- we only
-  have real trade prints + one order-book snapshot, not continuous book
-  depth over time).
-- Each new trade is checked against the quote resting from the PREVIOUS
-  fair value -- no lookahead bias.
-- Every simulated fill goes through the REAL RiskEngine before applying.
-- Full quoted size fills when crossed -- no partial fills or queue
-  modeling. Real backtests model queue priority; out of scope here and
-  flagged rather than silently assumed.
-"""
 from __future__ import annotations
 
 import os
