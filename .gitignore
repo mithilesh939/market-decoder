@@ -1,23 +1,69 @@
-generate
+# ----------------------------
+# Python
+# ----------------------------
+.venv/
+__pycache__/
+*.py[cod]
+*.so
+.pytest_cache/
+
+# ----------------------------
+# C++ Build
+# ----------------------------
+build/
+*.o
+*.obj
+*.a
 benchmark
 test_decoder
 test_ring_buffer
 bench_concurrency
 bench_adaptive
-market_data.bin
-python/*.so
-python/__pycache__/
-tools/__pycache__/
-tools/real_market_data.bin
-tools/real_data_summary.json
-*.o
 
-# Local Environment and Massive Datasets
-.venv/
-datasets/
-data/
+# ----------------------------
+# IDE
+# ----------------------------
+.vscode/
+.idea/
+
+# ----------------------------
+# Logs
+# ----------------------------
+*.log
+
+# ----------------------------
+# Generated Data
+# ----------------------------
+results/
+output/
+exports/
+
+# ----------------------------
+# Large Market Data
+# ----------------------------
+*.bin
 *.csv
 *.zip
-*.bin
-__pycache__/
-*.pyc
+datasets/
+data/
+tools/monthly_bins/
+tools/real_market_data.bin
+tools/real_data_summary.json
+
+# ----------------------------
+# Python Build
+# ----------------------------
+python/build/
+python/*.so
+
+# ----------------------------
+# Local Database
+# ----------------------------
+*.db
+*.sqlite
+
+# ----------------------------
+# OS
+# ----------------------------
+.DS_Store
+Thumbs.db

@@ -542,7 +542,7 @@
           },
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT time, latency_ns AS value FROM latency_samples WHERE decoder_type='simd' AND $__timeFilter(time) ORDER BY time",
+          "rawSql": "SELECT time, latency_ns AS value FROM latency_samples WHERE decoder_type='tick' AND $__timeFilter(time) ORDER BY time",
           "refId": "A"
         }
       ]
