@@ -1,8 +1,8 @@
-# 🚀 Market Decoder & Low-Latency Trading Analytics Platform
+# Market Decoder — Low-Latency Trading Analytics Platform
 
-> High-performance market data decoding, real-time analytics, risk monitoring, and visualization platform inspired by modern quantitative trading infrastructure.
+> High-performance market data decoding, real-time analytics, risk monitoring, and visualization — modeled on the core infrastructure behind quantitative trading firms.
 
-![C++](https://img.shields.io/badge/C++20-blue)
+![C++](https://img.shields.io/badge/C++17-blue)
 ![Python](https://img.shields.io/badge/Python-3.11-yellow)
 ![TimescaleDB](https://img.shields.io/badge/TimescaleDB-PostgreSQL-blue)
 ![Grafana](https://img.shields.io/badge/Grafana-Dashboard-orange)
@@ -12,230 +12,216 @@
 
 ## Overview
 
-This project implements a high-performance market data processing pipeline capable of decoding millions of market messages with ultra-low latency while providing real-time visualization and analytics.
+This project implements an end-to-end market data pipeline: a low-latency binary protocol decoder written in C++, a streaming/concurrency layer, a pre-trade risk engine, a market-making strategy module, and a TimescaleDB + Grafana analytics layer running against **695+ million real Binance BTCUSDT trades** spanning January–June 2025.
 
-The system combines modern C++, Python, TimescaleDB, and Grafana to simulate the core components of a quantitative trading firm's market data infrastructure.
+The emphasis throughout is on the systems-engineering problems behind electronic trading infrastructure, not on producing a profitable strategy:
 
-Rather than focusing only on algorithmic trading strategies, this project emphasizes the engineering challenges behind high-frequency trading systems:
-
-- Efficient binary protocol decoding
-- Zero-copy parsing
-- Cache-friendly memory access
-- High-throughput data ingestion
-- Time-series storage
-- Real-time monitoring
-- Risk management
+- Zero-copy, cache-friendly binary protocol decoding
+- Lock-free / concurrent streaming pipelines
+- High-throughput time-series ingestion and storage
+- Pre-trade risk rule enforcement
+- Real-time observability and monitoring
 
 ---
 
-# Architecture
+## Architecture
 
 ```
-                    Historical Market Data
-                            │
-                            ▼
-                  Binary Market Data Files
-                            │
-                            ▼
-             High Performance Market Decoder
-                   (C++20 + Python Binding)
-                            │
-            ┌───────────────┴───────────────┐
-            ▼                               ▼
-      Trade Messages                  Quote Messages
-            │                               │
-            └───────────────┬───────────────┘
-                            ▼
-                     TimescaleDB
-                            │
-          ┌─────────────────┼─────────────────┐
-          ▼                 ▼                 ▼
-    Market Analytics   Risk Engine     Performance Metrics
-          │                 │                 │
-          └─────────────────┼─────────────────┘
-                            ▼
-                        Grafana
+Binance historical trade archive (CSV)
+        │  tools/convert_binance_csv.py
+        ▼
+33-byte packed binary protocol (include/protocol.hpp)
+        │
+        ├──────────────► C++ Decoder Layer (src/, bench/)
+        │                 Naive vs. memory-mapped decode paths
+        │                 benchmarked for throughput/latency
+        │
+        ├──────────────► Streaming Layer (streaming/)
+        │                 Ring buffer, mutex-queue baseline,
+        │                 adaptive batching, concurrency benchmarks
+        │
+        ├──────────────► Risk Engine (risk/)
+        │                 Price collar, order size limits,
+        │                 inventory limits, kill switch
+        │
+        ├──────────────► Strategy Layer (strategy/)
+        │                 Avellaneda–Stoikov market maker + backtester
+        │
+        └──────────────► tools/load_trades.py
+                          ▼
+                  TimescaleDB hypertable `trades`
+                  (compressed columnstore, 695M rows)
+                          │
+                          ▼
+              Continuous aggregates (1h / 1d OHLCV)
+                          │
+                          ▼
+                       Grafana
+          Executive dashboard: price/volume, risk metrics,
+          decoder latency comparison, system health
 ```
 
 ---
 
-# Features
+## Components
 
-### High Performance Decoder
+### Decoder (`src/`, `bench/`, `include/`)
+Binary protocol decoder with naive and memory-mapped implementations, benchmarked head-to-head.
 
-- Binary protocol decoder written in C++
-- Python bindings for research workflows
-- Zero-copy memory mapping
-- Cache-efficient parsing
-- Multi-million message throughput
+### Streaming Layer (`streaming/`)
+Ring buffer and mutex-queue message passing, with adaptive batching. Benchmarked separately for single-core decode latency vs. multi-core concurrent throughput (`bench_concurrency`, `bench_adaptive`).
 
----
+### Risk Engine (`risk/`)
+Configurable, independent pre-trade rules — price collar, order size limits, inventory limits, kill switch — designed so new rules can be added without touching the core engine.
 
-### Time-Series Storage
+### Strategy Layer (`strategy/`)
+Avellaneda–Stoikov market-making model with a backtesting harness (`backtest.py`, `backtest_as.py`), run against real historical price data.
 
-- TimescaleDB backend
-- Optimized hypertables
-- Efficient historical queries
-- Batch ingestion pipeline
-- Scalable market data storage
+### Analytics (`analytics/`)
+Latency, market regime, TCA, throughput, and summary statistics modules.
 
----
+### Python Bindings (`python/`)
+Pybind11 bindings exposing the C++ decoder to Python for research workflows.
 
-### Grafana Dashboard
-
-Interactive dashboards including:
-
-- Price Action
-- Volume Analysis
-- Trade Rate
-- VWAP
-- Spread Analysis
-- Latency Metrics
-- CPU Usage
-- Cache Misses
-- Branch Prediction
-- Risk Monitoring
+### Data Pipeline & Dashboard (`tools/`, `grafana-stack/`)
+- `convert_binance_csv.py` — converts raw Binance CSV exports into the internal 33-byte binary wire format
+- `load_trades.py` — streams the binary files into a TimescaleDB hypertable via bulk `COPY`
+- `setup_ohlcv_aggregates.sql` — builds 1-hour/1-day OHLCV continuous aggregates so dashboard queries never scan raw tick data
+- `validate_data.py` — verifies date coverage, missing days, and row-level sanity checks
+- `grafana-stack/` — Docker Compose stack (TimescaleDB + Grafana) with the full executive dashboard
 
 ---
 
-### Risk Engine
+## Results
 
-Implements configurable pre-trade risk checks including:
+### Decoder performance
+| Decoder | Latency | Throughput |
+|---|---|---|
+| Naive | 26.48 ns/message | 37.8M msg/s |
+| Memory-mapped | 7.75 ns/message | 129.1M msg/s |
 
-- Price Collar
-- Order Size Limits
-- Inventory Limits
-- Kill Switch
-- Rule Engine Framework
+*(re-verify with `make bench` before publishing final numbers — see Reproducing below)*
 
----
+### Data pipeline
+- **695,541,427** real Binance BTCUSDT trades loaded, Jan 1 – Jun 30 2025
+- Raw binary size **23 GB** → compressed TimescaleDB hypertable **15 GB** (1.5x, native columnstore compression)
+- **0 missing days** across the full 6-month window (verified via `validate_data.py`)
+- 27 compressed chunks, queried through 1h/1d continuous aggregates (~4,500 rows total) so dashboard panels never touch the raw 695M-row table directly
 
-### Performance Benchmarking
+### Risk & performance analytics (BTC market benchmark, computed from real price data)
+- Sharpe ratio (annualized): `[CONFIRM]`
+- Historical VaR (95% / 99%, 1-day): `[CONFIRM]`
+- Max drawdown: `[CONFIRM]`
+- Decoder benchmark p50 / p95 / p99 latency by decoder type: `[CONFIRM]`
 
-Performance comparison between multiple decoder implementations.
-
-Example benchmark:
-
-| Decoder | Latency |
-|----------|---------|
-| Naive Decoder | 26.48 ns/message |
-| Memory-Mapped Decoder | 7.75 ns/message |
-
-Achieved over **129 million messages per second** using memory-mapped decoding.
-
----
-
-# Technology Stack
-
-## Core
-
-- C++20
-- Python
-- Pybind11
-
-## Database
-
-- PostgreSQL
-- TimescaleDB
-
-## Visualization
-
-- Grafana
-
-## Build
-
-- Make
-- GCC
-- CMake
+*(pull these from the dashboard's Risk & Performance row after the final run and paste them in here as concrete, quotable numbers)*
 
 ---
 
-# Project Structure
+## Technology Stack
+
+| Layer | Tools |
+|---|---|
+| Core | C++17, Python 3.11, Pybind11 |
+| Database | PostgreSQL, TimescaleDB (hypertables + native compression + continuous aggregates) |
+| Visualization | Grafana 11 |
+| Build | Make, GCC |
+| Data source | Binance historical trade archive |
+
+---
+
+## Project Structure
 
 ```
 market-decoder-optiver/
-
-├── benchmark/
-├── dashboard/
-├── decoder/
-├── include/
-├── python/
-├── risk/
-├── tests/
+├── src/                  C++ decoder core
+├── bench/                Decoder benchmarks (naive vs. memory-mapped)
+├── streaming/             Ring buffer, concurrency, adaptive batching
+├── risk/                  Pre-trade risk engine
+├── strategy/              Avellaneda-Stoikov market maker + backtester
+├── analytics/             Latency, regime, TCA, throughput analysis
+├── features/               Microstructure feature extraction
+├── python/                 Pybind11 bindings
+├── include/                 Shared headers / wire protocol definition
+├── tests/                    C++ unit tests
 ├── tools/
-│   ├── monthly_bins/
-│   └── convert_binance_csv.py
+│   ├── convert_binance_csv.py
+│   ├── load_trades.py
+│   ├── setup_ohlcv_aggregates.sql
+│   └── validate_data.py
+├── grafana-stack/
+│   ├── docker-compose.yml
+│   ├── init-db/
+│   ├── provisioning/
+│   └── dashboards/executive-overview.json
 ├── Makefile
 └── README.md
 ```
 
 ---
 
-# Performance
+## Reproducing This Project
 
-The decoder was evaluated using real market data.
+**1. Build and test the C++ layer:**
+```bash
+make clean && make
+make test              # runs test_decoder, test_ring_buffer
+make bench             # generates 2M synthetic messages, benchmarks decoders
+make bench-streaming   # concurrency + adaptive batching benchmarks
+```
 
-## Decoder Throughput
+**2. Bring up the data stack:**
+```bash
+cd grafana-stack && docker compose up -d
+```
 
-| Decoder | Throughput |
-|----------|-----------:|
-| Naive | 37.8 Million msg/s |
-| Memory Mapped | 129.1 Million msg/s |
+**3. Load real market data** (requires Binance historical CSVs converted to the internal binary format via `tools/convert_binance_csv.py`):
+```bash
+pip install psycopg2-binary pandas numpy --break-system-packages
+python3 tools/load_trades.py --truncate
+```
+
+**4. Build the OHLCV aggregates powering the dashboard:**
+```bash
+docker exec -i quant-timescaledb psql -U quant -d quant < tools/setup_ohlcv_aggregates.sql
+```
+
+**5. Validate data integrity:**
+```bash
+python3 tools/validate_data.py
+```
+
+**6. Import the dashboard:** Grafana → Dashboards → New → Import → upload `grafana-stack/dashboards/executive-overview.json`
 
 ---
 
-# Risk Engine
+## Future Work
 
-The rule engine supports independent configurable rules.
-
-Current implementation includes:
-
-- Price Collar
-- Inventory Limits
-- Order Size Limits
-- Kill Switch
-
-Additional rules can be added without modifying the core engine.
-
----
-
-# Future Work
-
-- FPGA accelerated decoding
-- SIMD optimized parser
+- SIMD-optimized parsing
 - Lock-free processing pipeline
-- Live exchange connectivity
-- Multi-symbol support
-- Order book reconstruction
-- Strategy backtesting engine
-- Real-time anomaly detection
-- Latency regression analysis
+- Live exchange connectivity (currently historical-only)
+- Multi-symbol support and order book reconstruction
+- Full strategy backtesting engine wired into the risk/dashboard layer (currently, market-data metrics and strategy backtests are separate — see note below)
+- Latency regression tracking across decoder versions
 
 ---
 
-# Learning Outcomes
+## Scope Notes
 
-This project explores many of the software engineering concepts used in modern quantitative trading systems:
+Some metrics that would require live strategy execution (equity curve, win rate, expectancy, slippage/TCA on real fills) are intentionally kept separate from the market-data dashboard — the `trades` table holds raw market ticks, not strategy positions. The `strategy/` module's backtest results are a separate artifact from the live dashboard and are not conflated with buy-and-hold market benchmarks shown there.
 
-- Binary protocol engineering
-- Low-latency systems
-- Memory optimization
-- High-throughput data pipelines
-- Time-series databases
-- Risk management
-- Performance benchmarking
-- Real-time observability
+Decoder latency figures are measured from real, timed runs of the C++ decoder; the input stream used for that specific benchmark is synthetic (standard practice for latency/throughput testing, not requiring a live feed).
 
 ---
 
-# Acknowledgements
+## Acknowledgements
 
-This project was developed for learning and research purposes to better understand the infrastructure powering modern electronic markets and quantitative trading systems.
+Developed for learning and research purposes to understand the infrastructure behind modern electronic markets and quantitative trading systems.
 
-It is **not affiliated with or endorsed by Optiver, Jane Street, IMC, Hudson River Trading, Tower Research, or any exchange.**
+Not affiliated with or endorsed by Optiver, Jane Street, IMC, Hudson River Trading, Tower Research, or any exchange.
 
 ---
 
-# License
+## License
 
 MIT License
