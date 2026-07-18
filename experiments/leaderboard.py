@@ -1,6 +1,4 @@
-"""
-Displays the best optimization results.
-"""
+
 
 import csv
 
