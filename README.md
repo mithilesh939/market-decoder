@@ -207,6 +207,23 @@ python3 tools/validate_data.py
 **6. Import the dashboard:** Grafana → Dashboards → New → Import → upload `grafana-stack/dashboards/executive-overview.json`
 
 ---
+## Dashboard
+
+Grafana executive dashboard, running against the full 6-month, 695M-row dataset described below.
+
+### Executive Summary & Key Metrics
+![Executive Summary](docs/screenshots/01-executive-summary.png)
+
+### Risk Metrics & Price Chart
+![Risk and Price](docs/screenshots/02-risk-and-price.png)
+
+### Latency, Drawdown & Volatility Analytics
+![Latency and Analytics](docs/screenshots/03-latency-and-analytics.png)
+
+### Comparison Tables & Market Regime
+![Comparison Tables](docs/screenshots/04-comparison-tables.png)
+
+Full dashboard definition (queries, panel configs): [`grafana-stack/dashboards/executive-overview.json`](grafana-stack/dashboards/executive-overview.json)
 
 ## Future Work
 
